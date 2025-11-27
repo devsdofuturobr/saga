@@ -1,0 +1,171 @@
+{
+  "info": {
+    "_postman_id": "5f8f2f5e-0c4a-4c9e-9d5a-0f7a2c2e7b12",
+    "name": "SAGA Microservices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection para demonstrar o padrão SAGA entre Order, Payment e Inventory services"
+  },
+  "variable": [
+    { "key": "order_base_url", "value": "http://localhost:8080" },
+    { "key": "payment_base_url", "value": "http://localhost:8081" },
+    { "key": "inventory_base_url", "value": "http://localhost:8082" },
+    { "key": "customerId", "value": "CUST-123" },
+    { "key": "productId", "value": "PROD-001" },
+    { "key": "quantity", "value": "2" },
+    { "key": "amount", "value": "1399.98" }
+  ],
+  "item": [
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"productId\": \"{{productId}}\",\n  \"quantity\": {{quantity}},\n  \"totalAmount\": {{amount}}\n}"
+            },
+            "url": {
+              "raw": "{{order_base_url}}/api/orders"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201 Created', function () { pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
+                  "var json = pm.response.json(); if (json && json.id) { pm.environment.set('orderId', json.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{order_base_url}}/api/orders/{{orderId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.expect(pm.response.code).to.eql(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{order_base_url}}/api/orders"
+            }
+          }
+        },
+        {
+          "name": "List Orders by Customer",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{order_base_url}}/api/orders/customer/{{customerId}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory Service",
+      "item": [
+        {
+          "name": "Update Inventory",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{inventory_base_url}}/api/inventory/update?productId={{productId}}&quantity={{quantity}}"
+            }
+          }
+        },
+        {
+          "name": "Compensate Inventory",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{inventory_base_url}}/api/inventory/compensate?productId={{productId}}&quantity={{quantity}}"
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{inventory_base_url}}/api/inventory/products/{{productId}}"
+            }
+          }
+        },
+        {
+          "name": "List All Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{inventory_base_url}}/api/inventory/products"
+            }
+          }
+        },
+        {
+          "name": "List Available Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{inventory_base_url}}/api/inventory/products/available"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Service",
+      "item": [
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{payment_base_url}}/api/payments/process?orderId={{orderId}}&customerId={{customerId}}&amount={{amount}}"
+            }
+          }
+        },
+        {
+          "name": "Refund Payment",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{payment_base_url}}/api/payments/refund?orderId={{orderId}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Workflow",
+      "item": [
+        { "name": "1) Create Order", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "body": {"mode": "raw", "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"productId\": \"{{productId}}\",\n  \"quantity\": {{quantity}},\n  \"totalAmount\": {{amount}}\n}" }, "url": { "raw": "{{order_base_url}}/api/orders" } }, "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "var json = pm.response.json(); if (json && json.id) { pm.environment.set('orderId', json.id); }" ] } } ] },
+        { "name": "2) Check Order", "request": { "method": "GET", "url": { "raw": "{{order_base_url}}/api/orders/{{orderId}}" } } },
+        { "name": "3) Check Inventory", "request": { "method": "GET", "url": { "raw": "{{inventory_base_url}}/api/inventory/products/{{productId}}" } } },
+        { "name": "4) Process Payment (manual)", "request": { "method": "POST", "url": { "raw": "{{payment_base_url}}/api/payments/process?orderId={{orderId}}&customerId={{customerId}}&amount={{amount}}" } } },
+        { "name": "5) Refund Payment (manual)", "request": { "method": "POST", "url": { "raw": "{{payment_base_url}}/api/payments/refund?orderId={{orderId}}" } } }
+      ]
+    }
+  ]
+}

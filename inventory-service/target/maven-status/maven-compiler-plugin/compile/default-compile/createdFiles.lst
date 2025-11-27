@@ -1,0 +1,3 @@
+com/saga/inventoryservice/entity/Product.class
+com/saga/inventoryservice/InventoryServiceApplication.class
+com/saga/inventoryservice/repository/ProductRepository.class

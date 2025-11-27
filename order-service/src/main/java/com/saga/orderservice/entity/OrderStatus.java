@@ -1,0 +1,13 @@
+package com.saga.orderservice.entity;
+
+public enum OrderStatus {
+    PENDING,
+    PAYMENT_PROCESSING,
+    PAYMENT_COMPLETED,
+    PAYMENT_FAILED,
+    INVENTORY_PROCESSING,
+    INVENTORY_COMPLETED,
+    INVENTORY_FAILED,
+    COMPLETED,
+    CANCELLED
+}

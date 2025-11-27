@@ -1,0 +1,87 @@
+{
+  "info": {
+    "_postman_id": "c1b1f8a2-6f21-4a9e-9e5b-8a9f2a1d7f34",
+    "name": "SAGA Microservices (Static URLs)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collection com URLs diretas para Order, Payment e Inventory services"
+  },
+  "item": [
+    {
+      "name": "Order Service",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"CUST-123\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 2,\n  \"totalAmount\": 1399.98\n}"
+            },
+            "url": { "raw": "http://localhost:8080/api/orders" }
+          }
+        },
+        {
+          "name": "Get Order by ID (1)",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8080/api/orders/1" } }
+        },
+        {
+          "name": "List Orders",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8080/api/orders" } }
+        },
+        {
+          "name": "List Orders by Customer (CUST-123)",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8080/api/orders/customer/CUST-123" } }
+        }
+      ]
+    },
+    {
+      "name": "Inventory Service",
+      "item": [
+        {
+          "name": "Update Inventory (PROD-001, qty=2)",
+          "request": { "method": "POST", "url": { "raw": "http://localhost:8082/api/inventory/update?productId=PROD-001&quantity=2" } }
+        },
+        {
+          "name": "Compensate Inventory (PROD-001, qty=2)",
+          "request": { "method": "POST", "url": { "raw": "http://localhost:8082/api/inventory/compensate?productId=PROD-001&quantity=2" } }
+        },
+        {
+          "name": "Get Product by ID (PROD-001)",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8082/api/inventory/products/PROD-001" } }
+        },
+        {
+          "name": "List All Products",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8082/api/inventory/products" } }
+        },
+        {
+          "name": "List Available Products",
+          "request": { "method": "GET", "url": { "raw": "http://localhost:8082/api/inventory/products/available" } }
+        }
+      ]
+    },
+    {
+      "name": "Payment Service",
+      "item": [
+        {
+          "name": "Process Payment (orderId=1)",
+          "request": { "method": "POST", "url": { "raw": "http://localhost:8081/api/payments/process?orderId=1&customerId=CUST-123&amount=1399.98" } }
+        },
+        {
+          "name": "Refund Payment (orderId=1)",
+          "request": { "method": "POST", "url": { "raw": "http://localhost:8081/api/payments/refund?orderId=1" } }
+        }
+      ]
+    },
+    {
+      "name": "Workflow",
+      "item": [
+        { "name": "1) Create Order", "request": { "method": "POST", "header": [ {"key":"Content-Type","value":"application/json"} ], "body": {"mode": "raw", "raw": "{\n  \"customerId\": \"CUST-123\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 2,\n  \"totalAmount\": 1399.98\n}" }, "url": { "raw": "http://localhost:8080/api/orders" } } },
+        { "name": "2) Check Order (ID=1)", "request": { "method": "GET", "url": { "raw": "http://localhost:8080/api/orders/1" } } },
+        { "name": "3) Check Inventory (PROD-001)", "request": { "method": "GET", "url": { "raw": "http://localhost:8082/api/inventory/products/PROD-001" } } },
+        { "name": "4) Process Payment (orderId=1)", "request": { "method": "POST", "url": { "raw": "http://localhost:8081/api/payments/process?orderId=1&customerId=CUST-123&amount=1399.98" } } },
+        { "name": "5) Refund Payment (orderId=1)", "request": { "method": "POST", "url": { "raw": "http://localhost:8081/api/payments/refund?orderId=1" } } }
+      ]
+    }
+  ]
+}
