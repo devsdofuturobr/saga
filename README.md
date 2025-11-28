@@ -44,18 +44,6 @@ O fluxo segue o padrão SAGA com compensação:
 3. **Atualização de Inventário**: Solicita ao Inventory Service para atualizar o estoque
 4. **Compensação**: Se algum passo falhar, as ações anteriores são compensadas
 
-### Estados do Pedido
-
-- `PENDING` - Pedido criado
-- `PAYMENT_PROCESSING` - Pagamento em processamento
-- `PAYMENT_COMPLETED` - Pagamento concluído
-- `PAYMENT_FAILED` - Pagamento falhou
-- `INVENTORY_PROCESSING` - Inventário em processamento
-- `INVENTORY_COMPLETED` - Inventário atualizado
-- `INVENTORY_FAILED` - Falha na atualização do inventário
-- `COMPLETED` - Pedido concluído com sucesso
-- `CANCELLED` - Pedido cancelado
-
 ## Diagrama do Fluxo (Mermaid) 🗺️
 ```mermaid
 sequenceDiagram
@@ -125,28 +113,17 @@ Fluxo resumido:
 3) Atualiza estoque (`INVENTORY_*`)
 4) Sucesso → `COMPLETED`; falha → compensação e `CANCELLED`
 
-Estados de pedido: `PENDING`, `PAYMENT_PROCESSING`, `PAYMENT_COMPLETED`, `PAYMENT_FAILED`, `INVENTORY_PROCESSING`, `INVENTORY_COMPLETED`, `INVENTORY_FAILED`, `COMPLETED`, `CANCELLED`.
+### Estados do Pedido
 
----
-
-## Por que usar SAGA? ✨
-- Consistência eventual com autonomia por serviço
-- Resiliência: cada etapa tem compensação definida
-- Escalabilidade: transações locais, comunicação leve
-- Observabilidade e auditoria de cada etapa
-
-## Checklist SAGA ✅
-- [ ] Cada passo tem uma compensação definida
-- [ ] Estados do pedido cobrem sucesso e falhas
-- [ ] Comunicação remota simples e com tratamento de erro
-- [ ] Scripts/collections para reproduzir cenários
-- [ ] Logs claros para entender o fluxo
-
-## Quando evitar SAGA? 🛑
-- Você precisa de consistência forte e imediata em uma única operação
-- O domínio é simples e cabe em uma transação local
-- Latência ultrabaixa e complexidade operacional não são aceitáveis
-- O time ainda não tem maturidade para lidar com falhas e compensações
+- `PENDING` - Pedido criado
+- `PAYMENT_PROCESSING` - Pagamento em processamento
+- `PAYMENT_COMPLETED` - Pagamento concluído
+- `PAYMENT_FAILED` - Pagamento falhou
+- `INVENTORY_PROCESSING` - Inventário em processamento
+- `INVENTORY_COMPLETED` - Inventário atualizado
+- `INVENTORY_FAILED` - Falha na atualização do inventário
+- `COMPLETED` - Pedido concluído com sucesso
+- `CANCELLED` - Pedido cancelado
 
 ---
 
@@ -334,6 +311,25 @@ tail -f inventory-service/logs/spring.log
 - Idempotência: compensações devem tolerar reexecuções sem efeitos colaterais indesejados.
 - Timeouts e retries: configure limites e políticas de reexecução para chamadas remotas.
 - Observabilidade: registre transições de estado e correlações por `orderId`.
+---
+## Por que usar SAGA? ✨
+- Consistência eventual com autonomia por serviço
+- Resiliência: cada etapa tem compensação definida
+- Escalabilidade: transações locais, comunicação leve
+- Observabilidade e auditoria de cada etapa
+
+## Checklist SAGA ✅
+- [ ] Cada passo tem uma compensação definida
+- [ ] Estados do pedido cobrem sucesso e falhas
+- [ ] Comunicação remota simples e com tratamento de erro
+- [ ] Scripts/collections para reproduzir cenários
+- [ ] Logs claros para entender o fluxo
+
+## Quando evitar SAGA? 🛑
+- Você precisa de consistência forte e imediata em uma única operação
+- O domínio é simples e cabe em uma transação local
+- Latência ultrabaixa e complexidade operacional não são aceitáveis
+- O time ainda não tem maturidade para lidar com falhas e compensações
 
 ---
 
