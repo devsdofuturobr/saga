@@ -1,6 +1,55 @@
-# SAGA Pattern - Microservices Implementation
+# SAGA Pattern na Prática com Spring Boot 🎭🚀
 
-Este projeto demonstra a implementação do padrão SAGA para gerenciamento de transações distribuídas em uma arquitetura de microserviços.
+![Banner SAGA](https://raw.githubusercontent.com/devsdofuturobr/saga/master/images/saga.png)
+
+### SAGA em dois sabores 🍦
+- Orquestrada (command/HTTP): um orquestrador central coordena cada passo — no nosso caso, o `order-service` chama `payment` e `inventory` e aplica compensações quando necessário.
+  - Prós: fluxo explícito, debugging simples, ótimo para demos e times iniciando.
+  - Contras: acoplamento ao orquestrador, risco de ponto único de falha, precisa de cuidado para escalar.
+- Coreografada (eventos): não há orquestrador; cada serviço publica eventos e reage aos de outros (ex.: `OrderCreated` → `PaymentProcessed` → `InventoryReserved`), geralmente com Outbox + Kafka/RabbitMQ.
+  - Prós: baixo acoplamento, mais escalável e resiliente.
+  - Contras: rastreabilidade e observabilidade exigem mais esforço, consistência é eventual, requer mensageria e padrões como Outbox.
+
+## Bora Praticar hoje SAGA Orquestrado? 🧠
+- SAGA coordena transações locais entre microserviços com passos e compensações.
+- Use quando precisa de resiliência e consistência eventual; evite quando precisa de consistência forte imediata.
+- Aqui tem código pronto, endpoints, curls e compensações para testar rápido.
+
+## Tecnologias Utilizadas
+
+- Java 21
+- Spring Boot 3.2.0
+- Spring Data JPA
+- Spring Cloud OpenFeign (comunicação entre serviços)
+- H2 Database (banco em memória)
+- Maven
+
+## Endpoints das API
+
+### Order Service
+- `POST /api/orders` - Criar novo pedido
+- `GET /api/orders/{id}` - Buscar pedido por ID
+- `GET /api/orders` - Listar todos os pedidos
+- `GET /api/orders/customer/{customerId}` - Buscar pedidos por cliente
+
+### Payment Service
+- `POST /api/payments/process` - Processar pagamento
+- `POST /api/payments/refund` - Processar reembolso
+
+### Inventory Service
+- `POST /api/inventory/update` - Atualizar inventário
+- `POST /api/inventory/compensate` - Compensar inventário
+- `GET /api/inventory/products` - Listar todos os produtos
+- `GET /api/inventory/products/available` - Listar produtos disponíveis
+- `GET /api/inventory/products/{productId}` - Buscar produto por ID
+- `POST /api/inventory/products` - Criar novo produto
+- `PUT /api/inventory/products/{productId}/stock` - Atualizar estoque
+
+## Swagger UI 🔗
+- Swagger UI
+  - `http://localhost:8080/swagger-ui/index.html`
+  - `http://localhost:8081/swagger-ui/index.html`
+  - `http://localhost:8082/swagger-ui/index.html`
 
 ## Arquitetura
 
@@ -31,93 +80,201 @@ O fluxo segue o padrão SAGA com compensação:
 - `COMPLETED` - Pedido concluído com sucesso
 - `CANCELLED` - Pedido cancelado
 
-## Tecnologias Utilizadas
+## Diagrama do Fluxo (Mermaid) 🗺️
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant O as Order Service
+    participant P as Payment Service
+    participant I as Inventory Service
 
-- Java 17
-- Spring Boot 3.2.0
-- Spring Data JPA
-- Spring Cloud OpenFeign (comunicação entre serviços)
-- H2 Database (banco em memória)
-- Maven
+    C->>O: POST /api/orders
+    O->>P: processPayment(orderId, customerId, amount)
+    alt pagamento OK
+        O->>I: updateInventory(productId, quantity)
+        alt inventário OK
+            O->>O: status = COMPLETED
+        else inventário falhou
+            O->>P: refundPayment(orderId)
+            O->>O: status = INVENTORY_FAILED / CANCELLED
+        end
+    else pagamento falhou
+        O->>O: status = PAYMENT_FAILED
+    end
+```
 
-## Pré-requisitos
+E aí, devs! BoraPraticar SAGA de um jeito leve, direto e prático? 😎 Neste BoraPraticar vamos montar e entender um fluxo SAGA completo com três microserviços: `order-service`, `payment-service` e `inventory-service`. Além do passo a passo, tem benefícios, quando usar (e quando não!), códigos essenciais e curls para testar cenários felizes e compensatórios. Repo: https://github.com/devsdofuturobr/saga.git
 
-- Java 17 ou superior
-- Maven 3.6 ou superior
-- Bash (para scripts de execução)
+---
 
-## Como Executar
+## O que vamos construir 🧩
+- `Order Service` (8080): orquestrador da SAGA, cria pedidos e coordena os passos
+- `Payment Service` (8081): processa pagamentos e reembolsos
+- `Inventory Service` (8082): atualiza e compensa estoque
 
-### Opção 1: Scripts de Execução (Recomendado)
+Fluxo resumido:
+1) Cria pedido (`PENDING`)
+2) Processa pagamento (`PAYMENT_*`)
+3) Atualiza estoque (`INVENTORY_*`)
+4) Sucesso → `COMPLETED`; falha → compensação e `CANCELLED`
 
-1. **Iniciar todos os serviços**:
-   ```bash
-   chmod +x run-services.sh
-   ./run-services.sh
-   ```
+Estados de pedido: `PENDING`, `PAYMENT_PROCESSING`, `PAYMENT_COMPLETED`, `PAYMENT_FAILED`, `INVENTORY_PROCESSING`, `INVENTORY_COMPLETED`, `INVENTORY_FAILED`, `COMPLETED`, `CANCELLED`.
 
-2. **Verificar status dos serviços**:
-   ```bash
-   chmod +x status.sh
-   ./status.sh
-   ```
+---
 
-3. **Parar todos os serviços**:
-   ```bash
-   chmod +x stop-services.sh
-   ./stop-services.sh
-   ```
+## Por que usar SAGA? ✨
+- Consistência eventual com autonomia por serviço
+- Resiliência: cada etapa tem compensação definida
+- Escalabilidade: transações locais, comunicação leve
+- Observabilidade e auditoria de cada etapa
 
-4. **Testar o padrão SAGA**:
-   ```bash
-   chmod +x test-saga.sh
-   ./test-saga.sh
-   ```
+## Checklist SAGA ✅
+- [ ] Cada passo tem uma compensação definida
+- [ ] Estados do pedido cobrem sucesso e falhas
+- [ ] Comunicação remota simples e com tratamento de erro
+- [ ] Scripts/collections para reproduzir cenários
+- [ ] Logs claros para entender o fluxo
 
-### Opção 2: Manual
+## Quando evitar SAGA? 🛑
+- Você precisa de consistência forte e imediata em uma única operação
+- O domínio é simples e cabe em uma transação local
+- Latência ultrabaixa e complexidade operacional não são aceitáveis
+- O time ainda não tem maturidade para lidar com falhas e compensações
 
-1. **Order Service**:
-   ```bash
-   cd order-service
-   mvn spring-boot:run
-   ```
+---
 
-2. **Payment Service** (em outro terminal):
-   ```bash
-   cd payment-service
-   mvn spring-boot:run
-   ```
+## Códigos que importam 🧠
 
-3. **Inventory Service** (em outro terminal):
-   ```bash
-   cd inventory-service
-   mvn spring-boot:run
-   ```
+Orquestração da SAGA (Order Service):
 
-## Endpoints da API
+```java
+// order-service/src/main/java/com/saga/orderservice/service/SagaOrchestrator.java
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class SagaOrchestrator {
+    private final PaymentServiceClient paymentServiceClient;
+    private final InventoryServiceClient inventoryServiceClient;
+    private final OrderRepository orderRepository;
 
-### Order Service
-- `POST /api/orders` - Criar novo pedido
-- `GET /api/orders/{id}` - Buscar pedido por ID
-- `GET /api/orders` - Listar todos os pedidos
-- `GET /api/orders/customer/{customerId}` - Buscar pedidos por cliente
+    public void startOrderSaga(Order order) {
+        log.info("Starting SAGA for order: {}", order.getId());
+        try {
+            updateOrderStatus(order.getId(), OrderStatus.PAYMENT_PROCESSING);
+            boolean paymentProcessed = paymentServiceClient.processPayment(
+                    order.getId(), order.getCustomerId(), order.getTotalAmount());
+            if (!paymentProcessed) {
+                updateOrderStatus(order.getId(), OrderStatus.PAYMENT_FAILED);
+                return;
+            }
+            updateOrderStatus(order.getId(), OrderStatus.PAYMENT_COMPLETED);
 
-### Payment Service
-- `POST /api/payments/process` - Processar pagamento
-- `POST /api/payments/refund` - Processar reembolso
+            updateOrderStatus(order.getId(), OrderStatus.INVENTORY_PROCESSING);
+            boolean inventoryUpdated = inventoryServiceClient.updateInventory(
+                    order.getProductId(), order.getQuantity());
+            if (!inventoryUpdated) {
+                // compensação
+                paymentServiceClient.refundPayment(order.getId());
+                updateOrderStatus(order.getId(), OrderStatus.INVENTORY_FAILED);
+                return;
+            }
+            updateOrderStatus(order.getId(), OrderStatus.INVENTORY_COMPLETED);
+            updateOrderStatus(order.getId(), OrderStatus.COMPLETED);
+        } catch (Exception e) {
+            log.error("Error in SAGA for order {}: {}", order.getId(), e.getMessage());
+            handleSagaFailure(order);
+        }
+    }
 
-### Inventory Service
-- `POST /api/inventory/update` - Atualizar inventário
-- `POST /api/inventory/compensate` - Compensar inventário
-- `GET /api/inventory/products` - Listar todos os produtos
-- `GET /api/inventory/products/available` - Listar produtos disponíveis
-- `GET /api/inventory/products/{productId}` - Buscar produto por ID
-- `POST /api/inventory/products` - Criar novo produto
-- `PUT /api/inventory/products/{productId}/stock` - Atualizar estoque
+    private void handleSagaFailure(Order order) {
+        try {
+            if (order.getStatus() == OrderStatus.PAYMENT_COMPLETED ||
+                order.getStatus() == OrderStatus.INVENTORY_PROCESSING ||
+                order.getStatus() == OrderStatus.INVENTORY_FAILED) {
+                paymentServiceClient.refundPayment(order.getId());
+            }
+            updateOrderStatus(order.getId(), OrderStatus.CANCELLED);
+        } catch (Exception ignored) {}
+    }
 
-## Exemplos de Uso
+    private void updateOrderStatus(Long orderId, OrderStatus status) {
+        orderRepository.findById(orderId).ifPresent(o -> {
+            o.setStatus(status);
+            orderRepository.save(o);
+        });
+    }
+}
+```
 
-### Criar um Pedido
+Controller do Order (criar pedido):
+
+```java
+// order-service/src/main/java/com/saga/orderservice/controller/OrderController.java
+@PostMapping
+public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderRequest request) {
+    OrderResponse response = orderService.createOrder(request);
+    return new ResponseEntity<>(response, HttpStatus.CREATED);
+}
+```
+
+Clientes Feign (comunicação remota):
+
+```java
+// order-service/src/main/java/com/saga/orderservice/client/PaymentServiceClient.java
+@FeignClient(name = "payment-service", url = "http://localhost:8081")
+public interface PaymentServiceClient {
+    @PostMapping("/api/payments/process")
+    boolean processPayment(@RequestParam("orderId") Long orderId,
+                           @RequestParam("customerId") String customerId,
+                           @RequestParam("amount") BigDecimal amount);
+
+    @PostMapping("/api/payments/refund")
+    boolean refundPayment(@RequestParam("orderId") Long orderId);
+}
+```
+
+---
+
+## Endpoints principais 🛣️
+
+Order Service (8080)
+- POST `/api/orders`
+- GET `/api/orders/{id}`
+- GET `/api/orders`
+- GET `/api/orders/customer/{customerId}`
+
+Payment Service (8081)
+- POST `/api/payments/process?orderId=...&customerId=...&amount=...`
+- POST `/api/payments/refund?orderId=...`
+
+Inventory Service (8082)
+- POST `/api/inventory/update?productId=...&quantity=...`
+- POST `/api/inventory/compensate?productId=...&quantity=...`
+- GET `/api/inventory/products`
+- GET `/api/inventory/products/available`
+- GET `/api/inventory/products/{productId}`
+
+Swagger UI (dev-friendly):
+- http://localhost:8080/swagger-ui/index.html
+- http://localhost:8081/swagger-ui/index.html
+- http://localhost:8082/swagger-ui/index.html
+
+H2 Console (para ver o banco):
+- `order`: http://localhost:8080/h2-console (jdbc:h2:mem:orderdb)
+- `payment`: http://localhost:8081/h2-console (jdbc:h2:mem:paymentdb)
+- `inventory`: http://localhost:8082/h2-console (jdbc:h2:mem:inventorydb)
+Username: `sa` • Password: vazio
+
+---
+
+## Execução rápida ▶️
+- Terminais: `mvn spring-boot:run` dentro de cada serviço
+
+---
+
+## Bora testar com curl 🧪
+
+Happy path (pedido confirmado):
 
 ```bash
 curl -X POST http://localhost:8080/api/orders \
@@ -128,46 +285,57 @@ curl -X POST http://localhost:8080/api/orders \
     "quantity": 2,
     "totalAmount": 1399.98
   }'
-```
 
-### Verificar Status do Pedido
-
-```bash
-curl http://localhost:8080/api/orders/{orderId}
-```
-
-### Verificar Inventário
-
-```bash
+# supondo que o ID retornado seja 1
+curl http://localhost:8080/api/orders/1
 curl http://localhost:8082/api/inventory/products/PROD-001
 ```
 
-## Consoles H2
+Cenário compensatório (falha no inventário → reembolso):
 
-Cada serviço possui seu próprio banco H2 com console web disponível:
+```bash
+# quantidade maior que o estoque para forçar falha de inventário
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "CUST-123",
+    "productId": "PROD-001",
+    "quantity": 999,
+    "totalAmount": 999999.99
+  }'
 
-- Order Service: http://localhost:8080/h2-console
-- Payment Service: http://localhost:8081/h2-console
-- Inventory Service: http://localhost:8082/h2-console
+# ver status do pedido (tende a CANCELLED após compensação)
+curl http://localhost:8080/api/orders/2
 
-**Configurações do H2 Console:**
-- JDBC URL: `jdbc:h2:mem:orderdb` (ou `paymentdb`, `inventorydb`)
-- Username: `sa`
-- Password: (deixe em branco)
+# conferir inventário e (se pagamento tiver completado) reembolso aplicado
+curl http://localhost:8082/api/inventory/products/PROD-001
+```
 
-## Testando Falhas
+Falha de pagamento (aleatória, ~10%):
 
-O sistema está configurado para simular falhas aleatórias:
+```bash
+# recrie pedidos e observe logs/status; quando o pagamento falha, o pedido fica como PAYMENT_FAILED
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerId": "CUST-456",
+    "productId": "PROD-002",
+    "quantity": 1,
+    "totalAmount": 1299.99
+  }'
+```
 
-- **Payment Service**: 10% de chance de falha no processamento
-- **Inventory Service**: Falha quando estoque insuficiente
-- **Compensação**: Reembolso automático em caso de falha
+Manual (se quiser chamar direto):
 
-Para testar falhas, você pode:
+```bash
+# pagamento
+curl -X POST "http://localhost:8081/api/payments/process?orderId=1&customerId=CUST-123&amount=1399.98"
 
-1. Criar um pedido com quantidade maior que o estoque disponível
-2. Aguardar até que uma falha de pagamento ocorra (10% de chance)
-3. Verificar os logs para ver o processo de compensação
+# reembolso
+curl -X POST "http://localhost:8081/api/payments/refund?orderId=1"
+```
+
+---
 
 ## Logs e Monitoramento
 
@@ -184,54 +352,25 @@ tail -f payment-service/logs/spring.log
 tail -f inventory-service/logs/spring.log
 ```
 
-## Estrutura do Projeto
+---
 
-```
-saga/
-├── order-service/          # Order Service com SAGA Orchestrator
-│   ├── src/main/java/com/saga/orderservice/
-│   │   ├── entity/       # Entidades JPA
-│   │   ├── repository/   # Repositórios Spring Data
-│   │   ├── service/      # Lógica de negócio e SAGA
-│   │   ├── controller/   # APIs REST
-│   │   └── client/       # Clientes Feign
-│   └── src/main/resources/
-├── payment-service/        # Payment Service
-│   ├── src/main/java/com/saga/paymentservice/
-│   └── src/main/resources/
-├── inventory-service/      # Inventory Service
-│   ├── src/main/java/com/saga/inventoryservice/
-│   └── src/main/resources/
-├── run-services.sh         # Script para iniciar todos os serviços
-├── stop-services.sh        # Script para parar todos os serviços
-├── status.sh              # Script para verificar status
-├── test-saga.sh           # Script para testar o padrão SAGA
-└── README.md              # Este arquivo
-```
+## Erros comuns e dicas 🪛
+- Ciclo de beans: evite injetar `OrderService` dentro do orquestrador; use `OrderRepository` para atualizar status.
+- Idempotência: compensações devem tolerar reexecuções sem efeitos colaterais indesejados.
+- Timeouts e retries: configure limites e políticas de reexecução para chamadas remotas.
+- Observabilidade: registre transições de estado e correlações por `orderId`.
 
-## Notas Importantes
+---
 
-1. **Bancos em Memória**: Os serviços usam H2 em memória, então os dados são perdidos ao reiniciar
-2. **Portas**: Certifique-se de que as portas 8080, 8081 e 8082 estejam disponíveis
-3. **Comunicação**: Os serviços se comunicam via REST usando OpenFeign
-4. **Compensação**: O sistema implementa compensação automática para garantir consistência eventual
+## BoraPraticar: takeaways 🎯
+- SAGA é sobre coordenar transações locais com compensações pensadas
+- Troque “transação distribuída gigante” por “etapas menores + rollback inteligente”
+- Observabilidade e logs são parte do jogo
+- Nem todo problema pede SAGA — seja intencional 😉
 
-## Solução de Problemas
+Repo completo para você clonar e brincar: https://github.com/devsdofuturobr/saga.git
 
-### Serviços não iniciam
-- Verifique se as portas estão disponíveis: `netstat -an | grep 808`
-- Verifique se o Java 17 está instalado: `java -version`
-- Verifique se o Maven está instalado: `mvn -version`
-
-### Falha na comunicação entre serviços
-- Verifique se todos os serviços estão rodando: `./status.sh`
-- Verifique os logs de cada serviço
-- Certifique-se de que iniciou os serviços na ordem correta
-
-### Pedidos ficam travados em PENDING
-- Isso pode indicar falha de comunicação com outros serviços
-- Verifique os logs do Order Service para detalhes
-- Verifique se Payment Service e Inventory Service estão respondendo
+---
 
 ## Próximos Passos
 
@@ -239,9 +378,15 @@ Para uma implementação de produção, considere:
 
 1. **Mensageria**: Substituir comunicação REST por mensageria (RabbitMQ, Kafka)
 2. **Banco de Dados Persistente**: Usar PostgreSQL, MySQL ou MongoDB
-3. **Service Discovery**: Implementar Eureka ou Consul
+3. **Service Discovery**: Implementar com Kubernetes Service Discovery
 4. **API Gateway**: Adicionar um gateway para gerenciar as APIs
 5. **Monitoramento**: Implementar Prometheus, Grafana ou similar
 6. **Testes**: Adicionar testes unitários e de integração
 7. **Containerização**: Criar Docker containers para cada serviço
-8. **Orquestração**: Usar Kubernetes ou Docker Swarm
+8. **Orquestração**: Usar Kubernetes para gerenciar containers
+
+---
+
+## Valeu por chegar até aqui! 🙌
+- Se curtiu este BoraPraticar, deixa um comentário com suas dúvidas ou ideias.
+- Compartilhe com a galera e ajuda a levar SAGA para mais devs! 🔄✨
