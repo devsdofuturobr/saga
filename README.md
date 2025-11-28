@@ -27,33 +27,6 @@ E aí, devs! BoraPraticar SAGA de um jeito leve, direto e prático? 😎 Neste B
 - H2 Database (banco em memória)
 - Maven
 
-## Endpoints das API
-
-### Order Service
-- `POST /api/orders` - Criar novo pedido
-- `GET /api/orders/{id}` - Buscar pedido por ID
-- `GET /api/orders` - Listar todos os pedidos
-- `GET /api/orders/customer/{customerId}` - Buscar pedidos por cliente
-
-### Payment Service
-- `POST /api/payments/process` - Processar pagamento
-- `POST /api/payments/refund` - Processar reembolso
-
-### Inventory Service
-- `POST /api/inventory/update` - Atualizar inventário
-- `POST /api/inventory/compensate` - Compensar inventário
-- `GET /api/inventory/products` - Listar todos os produtos
-- `GET /api/inventory/products/available` - Listar produtos disponíveis
-- `GET /api/inventory/products/{productId}` - Buscar produto por ID
-- `POST /api/inventory/products` - Criar novo produto
-- `PUT /api/inventory/products/{productId}/stock` - Atualizar estoque
-
-## Swagger UI 🔗
-- Swagger UI
-  - `http://localhost:8080/swagger-ui/index.html`
-  - `http://localhost:8081/swagger-ui/index.html`
-  - `http://localhost:8082/swagger-ui/index.html`
-
 ## Arquitetura
 
 O sistema consiste em três microserviços principais:
@@ -105,6 +78,39 @@ sequenceDiagram
         O->>O: status = PAYMENT_FAILED
     end
 ```
+
+## Endpoints das API
+
+### Order Service
+- `POST /api/orders` - Criar novo pedido
+- `GET /api/orders/{id}` - Buscar pedido por ID
+- `GET /api/orders` - Listar todos os pedidos
+- `GET /api/orders/customer/{customerId}` - Buscar pedidos por cliente
+
+### Payment Service
+- `POST /api/payments/process` - Processar pagamento
+- `POST /api/payments/refund` - Processar reembolso
+
+### Inventory Service
+- `POST /api/inventory/update` - Atualizar inventário
+- `POST /api/inventory/compensate` - Compensar inventário
+- `GET /api/inventory/products` - Listar todos os produtos
+- `GET /api/inventory/products/available` - Listar produtos disponíveis
+- `GET /api/inventory/products/{productId}` - Buscar produto por ID
+- `POST /api/inventory/products` - Criar novo produto
+- `PUT /api/inventory/products/{productId}/stock` - Atualizar estoque
+
+## Swagger UI 🔗
+- Swagger UI
+  - `http://localhost:8080/swagger-ui/index.html`
+  - `http://localhost:8081/swagger-ui/index.html`
+  - `http://localhost:8082/swagger-ui/index.html`
+
+## H2 Console (para ver o banco):
+- `order`: http://localhost:8080/h2-console (jdbc:h2:mem:orderdb)
+- `payment`: http://localhost:8081/h2-console (jdbc:h2:mem:paymentdb)
+- `inventory`: http://localhost:8082/h2-console (jdbc:h2:mem:inventorydb)
+Username: `sa` • Password: vazio
 
 ---
 
@@ -233,38 +239,6 @@ public interface PaymentServiceClient {
     boolean refundPayment(@RequestParam("orderId") Long orderId);
 }
 ```
-
----
-
-## Endpoints principais 🛣️
-
-Order Service (8080)
-- POST `/api/orders`
-- GET `/api/orders/{id}`
-- GET `/api/orders`
-- GET `/api/orders/customer/{customerId}`
-
-Payment Service (8081)
-- POST `/api/payments/process?orderId=...&customerId=...&amount=...`
-- POST `/api/payments/refund?orderId=...`
-
-Inventory Service (8082)
-- POST `/api/inventory/update?productId=...&quantity=...`
-- POST `/api/inventory/compensate?productId=...&quantity=...`
-- GET `/api/inventory/products`
-- GET `/api/inventory/products/available`
-- GET `/api/inventory/products/{productId}`
-
-Swagger UI (dev-friendly):
-- http://localhost:8080/swagger-ui/index.html
-- http://localhost:8081/swagger-ui/index.html
-- http://localhost:8082/swagger-ui/index.html
-
-H2 Console (para ver o banco):
-- `order`: http://localhost:8080/h2-console (jdbc:h2:mem:orderdb)
-- `payment`: http://localhost:8081/h2-console (jdbc:h2:mem:paymentdb)
-- `inventory`: http://localhost:8082/h2-console (jdbc:h2:mem:inventorydb)
-Username: `sa` • Password: vazio
 
 ---
 
