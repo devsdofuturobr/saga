@@ -2,6 +2,9 @@
 
 ![Banner SAGA](https://raw.githubusercontent.com/devsdofuturobr/saga/master/images/saga.png)
 
+E aí, devs! BoraPraticar SAGA de um jeito leve, direto e prático? 😎 Neste BoraPraticar vamos montar e entender um fluxo SAGA completo com três microserviços: `order-service`, `payment-service` e `inventory-service`. Além do passo a passo, tem benefícios, quando usar (e quando não!), códigos essenciais e curls para testar cenários felizes e compensatórios. Repo: https://github.com/devsdofuturobr/saga.git
+
+
 ### SAGA em dois sabores 🍦
 - Orquestrada (command/HTTP): um orquestrador central coordena cada passo — no nosso caso, o `order-service` chama `payment` e `inventory` e aplica compensações quando necessário.
   - Prós: fluxo explícito, debugging simples, ótimo para demos e times iniciando.
@@ -102,8 +105,6 @@ sequenceDiagram
         O->>O: status = PAYMENT_FAILED
     end
 ```
-
-E aí, devs! BoraPraticar SAGA de um jeito leve, direto e prático? 😎 Neste BoraPraticar vamos montar e entender um fluxo SAGA completo com três microserviços: `order-service`, `payment-service` e `inventory-service`. Além do passo a passo, tem benefícios, quando usar (e quando não!), códigos essenciais e curls para testar cenários felizes e compensatórios. Repo: https://github.com/devsdofuturobr/saga.git
 
 ---
 
