@@ -1,6 +1,6 @@
 # SAGA Pattern na Prática com Spring Boot 🎭🚀
 
-![Banner SAGA](./assets/saga.png)
+![Banner SAGA](https://raw.githubusercontent.com/devsdofuturobr/saga/master/docs/assets/saga.png)
 
 ### SAGA em dois sabores 🍦
 - Orquestrada (command/HTTP): um orquestrador central coordena cada passo — no nosso caso, o `order-service` chama `payment` e `inventory` e aplica compensações quando necessário.
